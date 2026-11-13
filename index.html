@@ -1,0 +1,678 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INVENTRY</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+ --bg:#101410;--panel:#191f19;--panel2:#242d24;
+ --green:#b8f34b;--text:#f3f5f0;--muted:#929d91;
+ --border:#303b30;--red:#ff6969;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.primary{background:var(--green);color:#17200e;border:0;border-radius:9px;padding:12px 16px;font-weight:bold}
+.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:11px 14px}
+.danger{background:#402323;color:#ff8989;border:1px solid #633333;border-radius:8px;padding:8px}
+input,select{background:#111711;border:1px solid var(--border);color:white;padding:11px;border-radius:8px}
+label{font-size:13px;color:var(--muted)}
+.green{color:var(--green)}.red{color:var(--red)}
+.subtitle{font-size:14px;color:var(--muted)}
+.auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-box{width:100%;max-width:410px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:28px}
+.logo{font-size:28px;font-weight:900;margin-bottom:8px}
+.logo span{color:var(--green)}
+.auth-box input{width:100%;margin:8px 0 16px}
+.auth-box button{width:100%;margin-top:10px}
+.auth-message{font-size:13px;color:var(--muted);margin-top:15px;line-height:1.5}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:#151b15;border-right:1px solid var(--border);padding:25px 16px;display:flex;flex-direction:column;gap:30px}
+.nav{display:grid;gap:7px}
+.nav button{border:0;background:none;color:var(--muted);text-align:left;padding:13px;border-radius:9px}
+.nav button:hover,.nav button.active{background:#293522;color:var(--green)}
+.sidebar-bottom{margin-top:auto;color:var(--muted);font-size:12px;padding:10px}
+.main{flex:1;min-width:0;padding:30px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:28px}
+h1{font-size:27px;margin:0 0 7px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat,.panel{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:19px}
+.stat small{color:var(--muted)}
+.stat strong{display:block;font-size:29px;margin-top:12px}
+.content-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+.panel h2{font-size:17px;margin:0 0 17px}
+.toolbar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:17px}
+.search{width:100%;max-width:300px}
+table{width:100%;border-collapse:collapse;min-width:570px;font-size:14px}
+th{text-align:left;color:var(--muted);font-weight:normal}
+th,td{padding:13px 9px;border-bottom:1px solid var(--border)}
+.table-wrap{overflow-x:auto}
+.pill{display:inline-block;padding:5px 9px;border-radius:20px;background:#29351e;color:var(--green);font-size:11px}
+.pill.low{background:#422323;color:#ff8585}
+.empty{text-align:center;padding:30px;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.inventory-card{background:var(--panel);border:1px solid var(--border);padding:20px;border-radius:12px;cursor:pointer}
+.inventory-card:hover{border-color:var(--green)}
+.inventory-card h3{margin:0 0 8px}
+.inventory-card p{color:var(--muted);font-size:13px}
+.modal-bg{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:15px;z-index:10}
+.modal{width:100%;max-width:440px;max-height:90vh;overflow-y:auto;background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:23px}
+.modal h2{margin-top:0}
+.modal input,.modal select{width:100%;margin:7px 0 13px}
+.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:12px}
+.actions{display:flex;gap:7px;flex-wrap:wrap}
+@media(max-width:850px){.sidebar{width:190px}.stats{grid-template-columns:repeat(2,1fr)}.content-grid{grid-template-columns:1fr}}
+@media(max-width:600px){
+ .app{display:block}.sidebar{width:100%;padding:14px;gap:12px}
+ .logo{font-size:22px}.nav{display:flex;overflow-x:auto}
+ .nav button{white-space:nowrap;padding:10px}.sidebar-bottom{display:none}
+ .main{padding:19px}.topbar{align-items:flex-start;flex-direction:column}
+ .stats{gap:9px}.stat{padding:14px}.stat strong{font-size:24px}
+}
+</style>
+</head>
+<body>
+
+<!-- INICIO DE SESIÓN -->
+<div id="authScreen" class="auth-screen">
+ <div class="auth-box">
+  <div class="logo">INVENT<span>RY</span></div>
+  <p class="subtitle">Tu inventario, organizado en un solo lugar.</p>
+
+  <div id="loginFields">
+   <label>Correo electrónico</label>
+   <input id="authEmail" type="email" placeholder="tu@email.com">
+   <label>Contraseña</label>
+   <input id="authPassword" type="password" placeholder="Tu contraseña">
+   <button class="primary" onclick="login()">Iniciar sesión</button>
+   <button class="secondary" onclick="register()">Crear cuenta</button>
+  </div>
+  <p id="authMessage" class="auth-message">
+   Si todavía no tenés una cuenta, elegí Crear cuenta.
+  </p>
+ </div>
+</div>
+
+<!-- APLICACIÓN -->
+<div class="app hidden" id="app">
+ <aside class="sidebar">
+  <div class="logo">INVENT<span>RY</span></div>
+  <nav class="nav">
+   <button class="active" onclick="showPage('home',this)">⌂ Inicio</button>
+   <button onclick="showPage('products',this)">▦ Productos</button>
+   <button onclick="showPage('movements',this)">↕ Movimientos</button>
+   <button onclick="showPage('reports',this)">▤ Estadísticas</button>
+   <button onclick="showPage('team',this)">♙ Equipo</button>
+   <button onclick="showPage('settings',this)">⚙ Configuración</button>
+  </nav>
+  <div class="sidebar-bottom">
+   INVENTRY ONLINE<br>Gestión inteligente de stock
+   <br><br><button class="secondary" onclick="logout()">Cerrar sesión</button>
+  </div>
+ </aside>
+
+ <main class="main">
+  <div class="topbar">
+   <div>
+    <h1 id="pageTitle">Panel principal</h1>
+    <div class="subtitle" id="pageSubtitle">Controlá tu inventario desde un solo lugar.</div>
+    <div class="subtitle" id="userEmail"></div>
+   </div>
+   <button class="primary" onclick="openInventoryModal()">+ Nuevo inventario</button>
+  </div>
+
+  <section id="home">
+   <div id="inventorySelector" class="panel hidden">
+    <h2>Mis inventarios</h2>
+    <div id="inventoryCards" class="cards"></div>
+   </div>
+   <div id="dashboard">
+    <div class="stats">
+     <div class="stat"><small>Productos</small><strong id="totalProducts">0</strong></div>
+     <div class="stat"><small>Unidades en stock</small><strong id="totalUnits">0</strong></div>
+     <div class="stat"><small>Stock bajo</small><strong class="red" id="lowStock">0</strong></div>
+     <div class="stat"><small>Movimientos</small><strong id="totalMoves">0</strong></div>
+    </div>
+    <div class="content-grid">
+     <div class="panel">
+      <h2>Productos recientes</h2>
+      <div class="table-wrap">
+       <table><thead><tr><th>Producto</th><th>Stock</th><th>Estado</th></tr></thead>
+       <tbody id="recentProducts"></tbody></table>
+      </div>
+     </div>
+     <div class="panel">
+      <h2>Acciones rápidas</h2>
+      <div class="actions">
+       <button class="primary" onclick="openProductModal()">+ Producto</button>
+       <button class="secondary" onclick="openMovementModal()">↕ Movimiento</button>
+       <button class="secondary" onclick="showInventories()">Mis inventarios</button>
+      </div>
+      <br><h2>Inventario activo</h2>
+      <div id="activeInventoryName" class="green">Sin inventario</div>
+      <p class="subtitle" id="activeInventoryDescription"></p>
+     </div>
+    </div>
+   </div>
+  </section>
+
+  <section id="products" class="hidden">
+   <div class="toolbar">
+    <input id="productSearch" class="search" placeholder="Buscar producto..." oninput="renderProducts()">
+    <button class="primary" onclick="openProductModal()">+ Agregar producto</button>
+   </div>
+   <div class="panel table-wrap">
+    <table><thead><tr><th>Producto</th><th>Categoría</th><th>Código</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr></thead>
+    <tbody id="productsTable"></tbody></table>
+   </div>
+  </section>
+
+  <section id="movements" class="hidden">
+   <div class="toolbar">
+    <p class="subtitle">Historial de entradas y salidas.</p>
+    <button class="primary" onclick="openMovementModal()">+ Registrar movimiento</button>
+   </div>
+   <div class="panel table-wrap">
+    <table><thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cantidad</th></tr></thead>
+    <tbody id="movementsTable"></tbody></table>
+   </div>
+  </section>
+
+  <section id="reports" class="hidden">
+   <div class="stats">
+    <div class="stat"><small>Total productos</small><strong id="reportProducts">0</strong></div>
+    <div class="stat"><small>Unidades totales</small><strong id="reportUnits">0</strong></div>
+    <div class="stat"><small>Agotados</small><strong id="outStock">0</strong></div>
+    <div class="stat"><small>Stock bajo</small><strong id="reportLow">0</strong></div>
+   </div>
+   <div class="panel"><h2>Resumen</h2><p id="reportSummary"></p></div>
+  </section>
+
+  <section id="team" class="hidden">
+   <div class="panel">
+    <h2>Equipo y acceso</h2>
+    <p class="subtitle">La colaboración entre usuarios estará disponible en una próxima actualización.</p>
+    <p>Tipo de inventario: <strong id="teamType">Personal</strong></p>
+   </div>
+  </section>
+
+  <section id="settings" class="hidden">
+   <div class="panel">
+    <h2>Configuración del inventario</h2>
+    <label>Nombre</label><br>
+    <input id="settingName" placeholder="Nombre del inventario">
+    <br><br><label>Descripción</label><br>
+    <input id="settingDescription" placeholder="Descripción">
+    <br><br><button class="primary" onclick="saveSettings()">Guardar cambios</button>
+   </div>
+  </section>
+ </main>
+</div>
+
+<div class="modal-bg" id="modalBg">
+ <div class="modal">
+  <h2 id="modalTitle">Nuevo inventario</h2>
+  <div id="modalContent"></div>
+  <div class="modal-actions">
+   <button class="secondary" onclick="closeModal()">Cancelar</button>
+   <button type="button" class="primary" id="modalSave">Guardar</button>
+  </div>
+ </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://cycrrsommhqyhzupaxxy.supabase.co";
+const SUPABASE_KEY = "sb_publishable_mtPpvK-XGxDNilnM6fqXxQ_PipAAtwu";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let inventories = [];
+let activeId = null;
+let editingProductId = null;
+
+function msg(text) {
+ document.getElementById("authMessage").textContent = text;
+}
+
+// AUTENTICACIÓN
+async function register() {
+ const email = document.getElementById("authEmail").value.trim();
+ const password = document.getElementById("authPassword").value;
+ if (!email || password.length < 6) {
+  msg("Ingresá un correo y una contraseña de al menos 6 caracteres.");
+  return;
+ }
+ msg("Creando cuenta...");
+ const {data,error} = await db.auth.signUp({email,password});
+ if (error) return msg("Error: " + error.message);
+ if (data.session) {
+  currentUser = data.user;
+  await startApp();
+ } else {
+  msg("¡Cuenta creada! Revisá tu correo para confirmar el registro y después iniciá sesión.");
+ }
+}
+
+async function login() {
+ const email = document.getElementById("authEmail").value.trim();
+ const password = document.getElementById("authPassword").value;
+ if (!email || !password) return msg("Completá correo y contraseña.");
+ msg("Iniciando sesión...");
+ const {data,error} = await db.auth.signInWithPassword({email,password});
+ if (error) return msg("No se pudo iniciar sesión: " + error.message);
+ currentUser = data.user;
+ await startApp();
+}
+
+async function logout() {
+ await db.auth.signOut();
+ currentUser = null;
+ inventories = [];
+ activeId = null;
+ document.getElementById("app").classList.add("hidden");
+ document.getElementById("authScreen").classList.remove("hidden");
+ msg("Sesión cerrada. Podés volver a ingresar.");
+}
+
+async function checkSession() {
+ const {data,error} = await db.auth.getSession();
+ if (error) {
+  msg("No se pudo comprobar la sesión: " + error.message);
+  return;
+ }
+ if (data.session) {
+  currentUser = data.session.user;
+  await startApp();
+ }
+}
+
+async function startApp() {
+ document.getElementById("authScreen").classList.add("hidden");
+ document.getElementById("app").classList.remove("hidden");
+ document.getElementById("userEmail").textContent = currentUser.email || "";
+ await loadInventories();
+}
+
+db.auth.onAuthStateChange((event,session) => {
+ if (event === "SIGNED_OUT") {
+  currentUser = null;
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("authScreen").classList.remove("hidden");
+ }
+});
+
+// CARGAR DATOS ONLINE
+async function loadInventories() {
+ const {data,error} = await db.from("inventories")
+  .select("*").order("created_at",{ascending:true});
+ if (error) {
+  alert("Error cargando inventarios: " + error.message);
+  return;
+ }
+
+ inventories = [];
+ for (const row of data) {
+  const {data:products,error:pe} = await db.from("products")
+   .select("*").eq("inventory_id",row.id);
+  const {data:movements,error:me} = await db.from("movements")
+   .select("*").eq("inventory_id",row.id).order("created_at",{ascending:false});
+  if (pe || me) {
+   alert("Error cargando los datos del inventario.");
+   return;
+  }
+  inventories.push({
+   id:row.id,name:row.name,description:row.description || "",
+   type:row.type || "Personal",
+   products:(products || []).map(p=>({
+    id:p.id,name:p.name,category:p.category || "",code:p.code || "",
+    stock:p.stock,min:p.min
+   })),
+   movements:(movements || []).map(m=>({
+    id:m.id,product:m.product,type:m.type,amount:m.amount,
+    date:new Date(m.created_at).toLocaleString("es-AR")
+   }))
+  });
+ }
+
+ if (inventories.length === 1) activeId = inventories[0].id;
+ if (!inventories.some(i=>i.id===activeId)) activeId = null;
+
+ renderAll();
+ if (inventories.length > 1 && !activeId) showInventories();
+}
+
+function activeInventory() {
+ return inventories.find(i=>i.id===activeId);
+}
+
+function escapeHTML(value) {
+ return String(value ?? "").replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ })[c]);
+}
+
+// NAVEGACIÓN
+function showPage(page,button) {
+ document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));
+ document.getElementById(page).classList.remove("hidden");
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+ if (button) button.classList.add("active");
+
+ const titles = {
+  home:["Panel principal","Controlá tu inventario desde un solo lugar."],
+  products:["Productos","Administrá tus productos."],
+  movements:["Movimientos","Controlá entradas y salidas."],
+  reports:["Estadísticas","Consultá el estado de tu inventario."],
+  team:["Equipo y acceso","Administrá la colaboración."],
+  settings:["Configuración","Personalizá tu inventario."]
+ };
+ document.getElementById("pageTitle").textContent = titles[page][0];
+ document.getElementById("pageSubtitle").textContent = titles[page][1];
+ renderAll();
+}
+
+// MODALES
+function openModal(title,content,action) {
+ document.getElementById("modalTitle").textContent = title;
+ document.getElementById("modalContent").innerHTML = content;
+ document.getElementById("modalSave").onclick = action;
+ document.getElementById("modalBg").style.display = "flex";
+}
+function closeModal() {
+ document.getElementById("modalBg").style.display = "none";
+}
+
+// INVENTARIOS
+function openInventoryModal() {
+ openModal("Crear inventario",`
+  <label>Nombre del inventario</label>
+  <input id="invName" placeholder="Ej: Mi negocio">
+  <label>Descripción</label>
+  <input id="invDesc" placeholder="Ej: Muebles">
+  <label>Tipo de inventario</label>
+  <select id="invType">
+   <option>Personal</option><option>Compartido</option>
+   <option>Negocio</option><option>Depósito</option><option>Otro</option>
+  </select>
+ `,saveNewInventory);
+}
+
+async function saveNewInventory() {
+ const name = document.getElementById("invName").value.trim();
+ if (!name) return alert("Escribí el nombre del inventario.");
+ const description = document.getElementById("invDesc").value.trim();
+ const type = document.getElementById("invType").value;
+
+ const {data,error} = await db.from("inventories").insert({
+  owner_id:currentUser.id,name,description,type
+ }).select().single();
+
+ if (error) return alert("No se pudo crear: " + error.message);
+
+ inventories.push({
+  id:data.id,name,description,type,products:[],movements:[]
+ });
+ activeId = data.id;
+ closeModal();
+ document.getElementById("inventorySelector").classList.add("hidden");
+ document.getElementById("dashboard").classList.remove("hidden");
+ renderAll();
+ alert("¡Inventario creado online!");
+}
+
+function showInventories() {
+ showPage("home",document.querySelector(".nav button"));
+ document.getElementById("dashboard").classList.add("hidden");
+ document.getElementById("inventorySelector").classList.remove("hidden");
+ renderInventories();
+}
+
+function renderInventories() {
+ const container = document.getElementById("inventoryCards");
+ if (!inventories.length) {
+  container.innerHTML = `<div class="empty">Todavía no tenés inventarios. Creá el primero.</div>`;
+  return;
+ }
+ container.innerHTML = inventories.map(inv=>`
+  <div class="inventory-card" onclick="selectInventory('${inv.id}')">
+   <h3>${escapeHTML(inv.name)}</h3>
+   <p>${escapeHTML(inv.description || "Sin descripción")}</p>
+   <span class="pill">${escapeHTML(inv.type)}</span>
+   <p>${inv.products.length} productos</p>
+  </div>
+ `).join("");
+}
+
+function selectInventory(id) {
+ activeId = id;
+ document.getElementById("inventorySelector").classList.add("hidden");
+ document.getElementById("dashboard").classList.remove("hidden");
+ renderAll();
+}
+
+// PRODUCTOS
+function openProductModal(id=null) {
+ const inv = activeInventory();
+ if (!inv) return alert("Primero creá un inventario.");
+ const product = id ? inv.products.find(p=>p.id===id) : null;
+ editingProductId = id;
+
+ openModal(product ? "Editar producto" : "Nuevo producto",`
+  <label>Nombre</label>
+  <input id="prodName" placeholder="Ej: Silla" value="${escapeHTML(product?.name || "")}">
+  <label>Categoría</label>
+  <input id="prodCategory" placeholder="Ej: Muebles" value="${escapeHTML(product?.category || "")}">
+  <label>Código</label>
+  <input id="prodCode" placeholder="Ej: SIL001" value="${escapeHTML(product?.code || "")}">
+  <label>Cantidad en stock</label>
+  <input id="prodStock" type="number" min="0" value="${product?.stock ?? 0}">
+  <label>Stock mínimo</label>
+  <input id="prodMin" type="number" min="0" value="${product?.min ?? 5}">
+ `,saveProduct);
+}
+
+async function saveProduct() {
+ const inv = activeInventory();
+ const name = document.getElementById("prodName").value.trim();
+ const stock = Number(document.getElementById("prodStock").value);
+ const min = Number(document.getElementById("prodMin").value);
+ if (!name || !Number.isInteger(stock) || stock<0 ||
+     !Number.isInteger(min) || min<0) {
+  return alert("Completá correctamente los datos.");
+ }
+ const productData = {
+  name,
+  category:document.getElementById("prodCategory").value.trim(),
+  code:document.getElementById("prodCode").value.trim(),
+  stock,min
+ };
+
+ let result;
+ if (editingProductId) {
+  result = await db.from("products").update(productData)
+   .eq("id",editingProductId).eq("inventory_id",inv.id);
+ } else {
+  result = await db.from("products").insert({
+   inventory_id:inv.id,...productData
+  }).select().single();
+ }
+
+ if (result.error) return alert("Error guardando producto: " + result.error.message);
+
+ if (editingProductId) {
+  Object.assign(inv.products.find(p=>p.id===editingProductId),productData);
+ } else {
+  inv.products.push({id:result.data.id,...productData});
+ }
+ editingProductId = null;
+ closeModal();
+ renderAll();
+}
+
+async function deleteProduct(id) {
+ if (!confirm("¿Querés eliminar este producto?")) return;
+ const inv = activeInventory();
+ const {error} = await db.from("products").delete()
+  .eq("id",id).eq("inventory_id",inv.id);
+ if (error) return alert("No se pudo eliminar: " + error.message);
+ inv.products = inv.products.filter(p=>p.id!==id);
+ renderAll();
+}
+
+// MOVIMIENTOS
+function openMovementModal() {
+ const inv = activeInventory();
+ if (!inv || !inv.products.length) return alert("Primero agregá algún producto.");
+
+ openModal("Registrar movimiento",`
+  <label>Producto</label>
+  <select id="moveProduct">
+   ${inv.products.map(p=>`<option value="${p.id}">${escapeHTML(p.name)} (Stock: ${p.stock})</option>`).join("")}
+  </select>
+  <label>Tipo de movimiento</label>
+  <select id="moveType"><option value="Entrada">Entrada</option><option value="Salida">Salida</option></select>
+  <label>Cantidad</label>
+  <input id="moveAmount" type="number" min="1" placeholder="Ej: 10">
+ `,saveMovement);
+}
+
+async function saveMovement() {
+ const inv = activeInventory();
+ const id = document.getElementById("moveProduct").value;
+ const type = document.getElementById("moveType").value;
+ const amount = Number(document.getElementById("moveAmount").value);
+ const product = inv.products.find(p=>p.id===id);
+
+ if (!Number.isInteger(amount) || amount<=0) return alert("Ingresá una cantidad válida.");
+ if (type==="Salida" && product.stock<amount) return alert("No hay suficiente stock.");
+
+ const newStock = product.stock + (type==="Entrada" ? amount : -amount);
+
+ // Guardar el nuevo stock
+ const {error:stockError} = await db.from("products")
+  .update({stock:newStock}).eq("id",id).eq("inventory_id",inv.id);
+ if (stockError) return alert("No se pudo actualizar el stock: " + stockError.message);
+
+ // Registrar el movimiento
+ const {data:movement,error} = await db.from("movements").insert({
+  inventory_id:inv.id,product_id:id,product:product.name,type,amount
+ }).select().single();
+
+ if (error) {
+  await db.from("products").update({stock:product.stock}).eq("id",id);
+  return alert("No se pudo guardar el movimiento: " + error.message);
+ }
+
+ product.stock = newStock;
+ inv.movements.unshift({
+  id:movement.id,product:product.name,type,amount,
+  date:new Date(movement.created_at).toLocaleString("es-AR")
+ });
+ closeModal();
+ renderAll();
+}
+
+// TABLAS
+function renderProducts() {
+ const inv = activeInventory();
+ const body = document.getElementById("productsTable");
+ if (!inv) {body.innerHTML="";return;}
+ const search = document.getElementById("productSearch").value.toLowerCase();
+ const products = inv.products.filter(p=>
+  (p.name+" "+p.category+" "+p.code).toLowerCase().includes(search)
+ );
+ body.innerHTML = products.length ? products.map(p=>`
+  <tr>
+   <td>${escapeHTML(p.name)}</td><td>${escapeHTML(p.category)}</td>
+   <td>${escapeHTML(p.code)}</td><td>${p.stock}</td>
+   <td><span class="pill ${p.stock<=p.min?"low":""}">${p.stock===0?"Agotado":p.stock<=p.min?"Stock bajo":"Normal"}</span></td>
+   <td><button class="secondary" onclick="openProductModal('${p.id}')">Editar</button>
+   <button class="danger" onclick="deleteProduct('${p.id}')">Eliminar</button></td>
+  </tr>
+ `).join("") : `<tr><td colspan="6" class="empty">No hay productos.</td></tr>`;
+}
+
+function renderMovements() {
+ const inv = activeInventory();
+ const body = document.getElementById("movementsTable");
+ if (!inv) {body.innerHTML="";return;}
+ body.innerHTML = inv.movements.length ? inv.movements.map(m=>`
+  <tr><td>${escapeHTML(m.date)}</td><td>${escapeHTML(m.product)}</td>
+  <td><span class="pill">${escapeHTML(m.type)}</span></td><td>${m.amount}</td></tr>
+ `).join("") : `<tr><td colspan="4" class="empty">Todavía no hay movimientos.</td></tr>`;
+}
+
+// PANEL Y ESTADÍSTICAS
+function renderDashboard() {
+ const inv = activeInventory();
+ if (!inv) {
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("inventorySelector").classList.remove("hidden");
+  renderInventories();
+  return;
+ }
+ const products = inv.products;
+ const units = products.reduce((sum,p)=>sum+p.stock,0);
+ const low = products.filter(p=>p.stock<=p.min).length;
+
+ document.getElementById("totalProducts").textContent=products.length;
+ document.getElementById("totalUnits").textContent=units;
+ document.getElementById("lowStock").textContent=low;
+ document.getElementById("totalMoves").textContent=inv.movements.length;
+ document.getElementById("activeInventoryName").textContent=inv.name;
+ document.getElementById("activeInventoryDescription").textContent=inv.description;
+
+ document.getElementById("recentProducts").innerHTML = products.length ?
+  [...products].slice(-5).reverse().map(p=>`
+   <tr><td>${escapeHTML(p.name)}</td><td>${p.stock}</td>
+   <td><span class="pill ${p.stock<=p.min?"low":""}">${p.stock<=p.min?"Stock bajo":"Normal"}</span></td></tr>
+  `).join("") : `<tr><td colspan="3" class="empty">Agregá tu primer producto.</td></tr>`;
+
+ document.getElementById("reportProducts").textContent=products.length;
+ document.getElementById("reportUnits").textContent=units;
+ document.getElementById("outStock").textContent=products.filter(p=>p.stock===0).length;
+ document.getElementById("reportLow").textContent=low;
+ document.getElementById("reportSummary").textContent=
+  `Tenés ${products.length} productos y ${units} unidades. Hay ${low} productos con stock bajo o agotado.`;
+
+ document.getElementById("teamType").textContent=inv.type;
+ document.getElementById("settingName").value=inv.name;
+ document.getElementById("settingDescription").value=inv.description || "";
+}
+
+function renderAll() {
+ renderDashboard();
+ renderProducts();
+ renderMovements();
+ renderInventories();
+}
+
+// CONFIGURACIÓN
+async function saveSettings() {
+ const inv = activeInventory();
+ if (!inv) return alert("No hay inventario activo.");
+ const name = document.getElementById("settingName").value.trim();
+ const description = document.getElementById("settingDescription").value;
+ if (!name) return alert("Ingresá un nombre.");
+
+ const {error} = await db.from("inventories")
+  .update({name,description}).eq("id",inv.id);
+ if (error) return alert("No se pudieron guardar los cambios: " + error.message);
+
+ inv.name=name;
+ inv.description=description;
+ renderAll();
+ alert("Configuración guardada online.");
+}
+
+// ARRANQUE
+checkSession();
+</script>
+</body>
+</html>
