@@ -193,13 +193,24 @@ th,td{padding:13px 9px;border-bottom:1px solid var(--border)}
    <div class="panel"><h2>Resumen</h2><p id="reportSummary"></p></div>
   </section>
 
-  <section id="team" class="hidden">
-   <div class="panel">
+  
+<section id="team" class="hidden">
+  <div class="panel">
     <h2>Equipo y acceso</h2>
-    <p class="subtitle">La colaboración entre usuarios estará disponible en una próxima actualización.</p>
-    <p>Tipo de inventario: <strong id="teamType">Personal</strong></p>
-   </div>
-  </section>
+    <p class="subtitle">
+      Compartí este inventario con otras personas.
+    </p>
+
+    <p>Tipo de inventario:
+      <strong id="teamType">Personal</strong>
+    </p>
+
+    <button class="primary" onclick="openShareModal()">
+      + Compartir inventario
+    </button>
+  </div>
+</section>
+
 
   <section id="settings" class="hidden">
    <div class="panel">
