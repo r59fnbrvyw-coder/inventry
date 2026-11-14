@@ -1,0 +1,741 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CarboRace 2.0</title>
+
+<style>
+:root {
+  --bg: #090d0b;
+  --panel: #141b17;
+  --green: #b7ff00;
+  --orange: #ff7b00;
+  --white: #f4f7f2;
+  --muted: #929d95;
+  --red: #ff4141;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, #1c2a1c 0%, #090d0b 55%);
+  color: var(--white);
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 20px;
+}
+
+.container {
+  width: 100%;
+  max-width: 1000px;
+  margin: auto;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.logo {
+  font-size: clamp(34px, 8vw, 58px);
+  font-weight: 1000;
+  font-style: italic;
+  letter-spacing: -3px;
+}
+
+.logo span {
+  color: var(--green);
+}
+
+.subtitle {
+  color: var(--muted);
+  letter-spacing: 4px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.panel {
+  background: rgba(20, 27, 23, .96);
+  border: 1px solid #2b382e;
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px #0006;
+}
+
+.section-title {
+  color: var(--green);
+  font-size: 13px;
+  letter-spacing: 2px;
+  font-weight: bold;
+  margin-bottom: 18px;
+}
+
+.race-track {
+  background: #080b09;
+  border: 1px solid #29352c;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 15px;
+}
+
+.track-label {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.track-label small {
+  color: var(--muted);
+}
+
+.track {
+  position: relative;
+  height: 20px;
+  background: repeating-linear-gradient(
+    90deg,
+    #283029 0px,
+    #283029 18px,
+    #151c17 18px,
+    #151c17 36px
+  );
+  border-radius: 20px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.progress {
+  height: 100%;
+  width: 0%;
+  border-radius: 20px;
+  transition: width .7s ease;
+}
+
+.progress.green {
+  background: linear-gradient(90deg, #5d8c00, var(--green));
+  box-shadow: 0 0 12px #b7ff0070;
+}
+
+.progress.orange {
+  background: linear-gradient(90deg, #a84400, var(--orange));
+  box-shadow: 0 0 12px #ff7b0070;
+}
+
+.car {
+  font-size: 25px;
+  margin-top: 4px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.stat {
+  background: #0c120e;
+  border: 1px solid #28352b;
+  padding: 14px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.stat strong {
+  display: block;
+  font-size: 25px;
+  margin-top: 5px;
+}
+
+.green-text {
+  color: var(--green);
+}
+
+.orange-text {
+  color: var(--orange);
+}
+
+.turn-indicator {
+  text-align: center;
+  padding: 15px;
+  background: #0b120d;
+  border: 1px solid var(--green);
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.turn-indicator h2 {
+  margin: 5px 0;
+  color: var(--green);
+  font-size: 23px;
+}
+
+.question-number {
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+
+.question {
+  font-size: clamp(19px, 4vw, 25px);
+  font-weight: bold;
+  line-height: 1.4;
+  margin: 15px 0 22px;
+}
+
+.answers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.answer {
+  background: #202a23;
+  color: white;
+  border: 1px solid #3b493e;
+  border-radius: 10px;
+  padding: 17px;
+  font-size: 15px;
+  font-weight: bold;
+  text-align: left;
+  cursor: pointer;
+  transition: .2s;
+  min-height: 65px;
+}
+
+.answer:hover:not(:disabled) {
+  border-color: var(--green);
+  background: #29372b;
+  transform: translateY(-2px);
+}
+
+.answer:disabled {
+  cursor: default;
+  opacity: .85;
+}
+
+.answer.correct {
+  background: #183c12;
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.answer.wrong {
+  background: #3d1717;
+  border-color: var(--red);
+  color: #ff7777;
+}
+
+.feedback {
+  min-height: 35px;
+  text-align: center;
+  font-weight: bold;
+  margin: 18px 0 5px;
+}
+
+button.main-btn {
+  width: 100%;
+  background: var(--green);
+  color: #10150c;
+  border: none;
+  padding: 16px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: .2s;
+}
+
+button.main-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
+button.main-btn.orange-btn {
+  background: var(--orange);
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.result {
+  text-align: center;
+  padding: 25px 10px;
+}
+
+.result h2 {
+  font-size: clamp(27px, 6vw, 42px);
+  color: var(--green);
+}
+
+.result p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.result-score {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin: 25px 0;
+  flex-wrap: wrap;
+}
+
+.score-box {
+  min-width: 120px;
+  padding: 20px;
+  background: #0c120e;
+  border-radius: 12px;
+  border: 1px solid #354337;
+}
+
+.score-box strong {
+  display: block;
+  font-size: 34px;
+  margin-top: 8px;
+}
+
+.footer {
+  text-align: center;
+  color: #657168;
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin: 25px 0 10px;
+}
+
+@media(max-width: 600px) {
+  body {
+    padding: 12px;
+  }
+
+  .panel {
+    padding: 15px;
+  }
+
+  .answers {
+    grid-template-columns: 1fr;
+  }
+
+  .answer {
+    min-height: 55px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+  <div class="logo">CARBO<span>RACE</span></div>
+  <div class="subtitle">CHAMPIONSHIP · CARBON 14 · 2.0</div>
+</header>
+
+<section class="panel">
+  <div class="section-title">01 / CIRCUITO</div>
+
+  <div class="race-track">
+    <div class="track-label">
+      <span class="green-text">GRUPO 1</span>
+      <small id="position1">0%</small>
+    </div>
+    <div class="track">
+      <div class="progress green" id="progress1"></div>
+    </div>
+    <div class="car">🏎️</div>
+  </div>
+
+  <div class="race-track">
+    <div class="track-label">
+      <span class="orange-text">GRUPO 2</span>
+      <small id="position2">0%</small>
+    </div>
+    <div class="track">
+      <div class="progress orange" id="progress2"></div>
+    </div>
+    <div class="car">🏎️</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <span class="green-text">GRUPO 1</span>
+      <strong id="score1">0 / 5</strong>
+      <small>Respuestas correctas</small>
+    </div>
+    <div class="stat">
+      <span class="orange-text">GRUPO 2</span>
+      <strong id="score2">0 / 5</strong>
+      <small>Respuestas correctas</small>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="gamePanel">
+
+  <div class="section-title">02 / COMPETENCIA</div>
+
+  <div id="startScreen">
+    <h2>¿ESTÁN LISTOS?</h2>
+    <p>
+      Dos grupos, diez preguntas y una sola carrera.
+      Cada grupo responderá cinco preguntas diferentes.
+      ¡Que gane el mejor!
+    </p>
+    <button class="main-btn" onclick="startGame()">INICIAR CARRERA</button>
+  </div>
+
+  <div id="questionScreen" class="hidden">
+
+    <div class="turn-indicator">
+      <div class="question-number" id="questionNumber">PREGUNTA 1 / 10</div>
+      <h2 id="turnTitle">TURNO DEL GRUPO 1</h2>
+      <small id="teamProgress">Pregunta 1 de 5 para este grupo</small>
+    </div>
+
+    <div class="question" id="questionText"></div>
+
+    <div class="answers" id="answers"></div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <button class="main-btn hidden" id="nextButton" onclick="nextQuestion()">
+      SIGUIENTE TURNO →
+    </button>
+
+  </div>
+
+  <div id="resultScreen" class="hidden result">
+    <h2 id="winnerTitle">¡FIN DE LA CARRERA!</h2>
+    <p id="winnerDescription"></p>
+
+    <div class="result-score">
+      <div class="score-box">
+        <span class="green-text">GRUPO 1</span>
+        <strong id="finalScore1">0/5</strong>
+      </div>
+      <div class="score-box">
+        <span class="orange-text">GRUPO 2</span>
+        <strong id="finalScore2">0/5</strong>
+      </div>
+    </div>
+
+    <button class="main-btn" onclick="location.reload()">VOLVER A JUGAR</button>
+  </div>
+
+</section>
+
+<div class="footer">CARBORACE 2.0 · RACE TO KNOWLEDGE</div>
+
+</div>
+
+<script>
+
+// PREGUNTAS COMPARTIDAS:
+// Grupo 1 responde las impares.
+// Grupo 2 responde las pares.
+
+const questions = [
+  {
+    q: "¿Cuál es la aplicación principal del carbono-14?",
+    options: [
+      "Pintar cuadros",
+      "Determinar la antigüedad de restos orgánicos",
+      "Fabricar esculturas",
+      "Restaurar edificios"
+    ],
+    correct: 1
+  },
+  {
+    q: "¿Qué tipo de isótopo es el carbono-14?",
+    options: [
+      "Un isótopo estable",
+      "Un metal",
+      "Un isótopo radiactivo",
+      "Un gas noble"
+    ],
+    correct: 2
+  },
+  {
+    q: "¿Qué material puede estudiarse mediante la datación por carbono-14?",
+    options: [
+      "Una barra de hierro",
+      "Restos de madera",
+      "Una pieza de plástico",
+      "Una roca de granito"
+    ],
+    correct: 1
+  },
+  {
+    q: "¿Qué se analiza para calcular la antigüedad de una muestra?",
+    options: [
+      "Su tamaño",
+      "Su color",
+      "La cantidad de carbono-14 que conserva",
+      "Su temperatura"
+    ],
+    correct: 2
+  },
+  {
+    q: "¿Cuál es la vida media aproximada del carbono-14?",
+    options: [
+      "100 años",
+      "5730 años",
+      "10.000 años",
+      "500 años"
+    ],
+    correct: 1
+  },
+  {
+    q: "¿Qué sucede cuando un organismo muere?",
+    options: [
+      "Deja de incorporar carbono-14",
+      "Duplica su carbono-14",
+      "Produce más carbono-14",
+      "No cambia nada"
+    ],
+    correct: 0
+  },
+  {
+    q: "¿Para qué se utiliza el carbono-14 en el arte?",
+    options: [
+      "Pintar cuadros",
+      "Restaurar edificios",
+      "Autenticar obras y documentos",
+      "Fabricar esculturas"
+    ],
+    correct: 2
+  },
+  {
+    q: "¿Qué permite determinar en criminalística?",
+    options: [
+      "La temperatura",
+      "La antigüedad de materiales",
+      "El peso de objetos",
+      "La altura de una persona"
+    ],
+    correct: 1
+  },
+  {
+    q: "¿Cómo se reduce el carbono-14 con el tiempo?",
+    options: [
+      "Se duplica",
+      "Desaparece inmediatamente",
+      "Se divide por la mitad",
+      "No cambia"
+    ],
+    correct: 2
+  },
+  {
+    q: "¿Se sigue utilizando el método del carbono-14?",
+    options: [
+      "No, está prohibido",
+      "Sí, para conocer la edad de objetos antiguos",
+      "Solo para estudiar plantas",
+      "Solo en laboratorios de arte"
+    ],
+    correct: 1
+  }
+];
+
+// ESTADO DEL JUEGO
+
+let currentQuestion = 0;
+let currentTeam = 1;
+let answered = false;
+
+let scores = {
+  1: 0,
+  2: 0
+};
+
+let completed = {
+  1: 0,
+  2: 0
+};
+
+// INICIAR
+
+function startGame() {
+  document.getElementById("startScreen").classList.add("hidden");
+  document.getElementById("questionScreen").classList.remove("hidden");
+
+  currentQuestion = 0;
+  currentTeam = 1;
+
+  renderQuestion();
+}
+
+// MOSTRAR PREGUNTA
+
+function renderQuestion() {
+  answered = false;
+
+  const question = questions[currentQuestion];
+
+  currentTeam = currentQuestion % 2 === 0 ? 1 : 2;
+
+  const teamQuestionNumber = Math.floor(currentQuestion / 2) + 1;
+
+  document.getElementById("questionNumber").textContent =
+    "PREGUNTA " + (currentQuestion + 1) + " / 10";
+
+  document.getElementById("turnTitle").textContent =
+    "TURNO DEL GRUPO " + currentTeam;
+
+  document.getElementById("turnTitle").style.color =
+    currentTeam === 1 ? "var(--green)" : "var(--orange)";
+
+  document.getElementById("teamProgress").textContent =
+    "Pregunta " + teamQuestionNumber + " de 5 para este grupo";
+
+  document.getElementById("questionText").textContent = question.q;
+
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("nextButton").classList.add("hidden");
+
+  const answersContainer = document.getElementById("answers");
+  answersContainer.innerHTML = "";
+
+  question.options.forEach((option, index) => {
+    const button = document.createElement("button");
+
+    button.className = "answer";
+    button.textContent = String.fromCharCode(65 + index) + ") " + option;
+
+    button.onclick = () => selectAnswer(index, button);
+
+    answersContainer.appendChild(button);
+  });
+}
+
+// RESPONDER
+
+function selectAnswer(selected, selectedButton) {
+  if (answered) return;
+
+  answered = true;
+
+  const question = questions[currentQuestion];
+  const buttons = document.querySelectorAll(".answer");
+
+  buttons.forEach(button => button.disabled = true);
+
+  const feedback = document.getElementById("feedback");
+
+  if (selected === question.correct) {
+
+    scores[currentTeam]++;
+    selectedButton.classList.add("correct");
+
+    feedback.textContent = "¡CORRECTO! +20% DE AVANCE 🏁";
+    feedback.style.color = "var(--green)";
+
+  } else {
+
+    selectedButton.classList.add("wrong");
+    buttons[question.correct].classList.add("correct");
+
+    feedback.textContent = "INCORRECTO. EL AUTO NO AVANZA.";
+    feedback.style.color = "var(--red)";
+  }
+
+  completed[currentTeam]++;
+
+  updateRace();
+
+  const nextButton = document.getElementById("nextButton");
+  nextButton.classList.remove("hidden");
+
+  if (currentQuestion === 9) {
+    nextButton.textContent = "VER RESULTADOS 🏆";
+  } else {
+    nextButton.textContent = "SIGUIENTE TURNO →";
+  }
+}
+
+// ACTUALIZAR CARRERA
+
+function updateRace() {
+  const percentage1 = scores[1] * 20;
+  const percentage2 = scores[2] * 20;
+
+  document.getElementById("progress1").style.width = percentage1 + "%";
+  document.getElementById("progress2").style.width = percentage2 + "%";
+
+  document.getElementById("position1").textContent = percentage1 + "%";
+  document.getElementById("position2").textContent = percentage2 + "%";
+
+  document.getElementById("score1").textContent = scores[1] + " / 5";
+  document.getElementById("score2").textContent = scores[2] + " / 5";
+}
+
+// SIGUIENTE PREGUNTA
+
+function nextQuestion() {
+  if (!answered) return;
+
+  currentQuestion++;
+
+  if (currentQuestion >= questions.length) {
+    showResults();
+    return;
+  }
+
+  renderQuestion();
+}
+
+// RESULTADOS
+
+function showResults() {
+  document.getElementById("questionScreen").classList.add("hidden");
+  document.getElementById("resultScreen").classList.remove("hidden");
+
+  document.getElementById("finalScore1").textContent =
+    scores[1] + " / 5";
+
+  document.getElementById("finalScore2").textContent =
+    scores[2] + " / 5";
+
+  const title = document.getElementById("winnerTitle");
+  const description = document.getElementById("winnerDescription");
+
+  if (scores[1] > scores[2]) {
+    title.textContent = "🏆 ¡GANA EL GRUPO 1!";
+    title.style.color = "var(--green)";
+    description.textContent =
+      "El Grupo 1 consiguió más respuestas correctas y se lleva la victoria.";
+
+  } else if (scores[2] > scores[1]) {
+    title.textContent = "🏆 ¡GANA EL GRUPO 2!";
+    title.style.color = "var(--orange)";
+    description.textContent =
+      "El Grupo 2 consiguió más respuestas correctas y se lleva la victoria.";
+
+  } else {
+    title.textContent = "🤝 ¡EMPATE!";
+    title.style.color = "white";
+    description.textContent =
+      "Los dos grupos terminaron con la misma cantidad de respuestas correctas.";
+  }
+}
+
+</script>
+
+</body>
+</html>
