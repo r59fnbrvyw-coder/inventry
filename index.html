@@ -590,6 +590,72 @@ async function saveMovement() {
 }
 
 // TABLAS
+
+// COMPARTIR INVENTARIO
+function openShareModal() {
+  const inv = activeInventory();
+
+  if (!inv) {
+    return alert("Primero seleccioná un inventario.");
+  }
+
+  openModal("Compartir inventario", `
+    <label>Correo electrónico del usuario</label>
+    <input
+      id="shareEmail"
+      type="email"
+      placeholder="persona@email.com"
+    >
+
+    <label>Permiso de acceso</label>
+    <select id="shareRole">
+      <option value="editor">Editor</option>
+      <option value="viewer">Visualizador</option>
+    </select>
+
+    <p class="subtitle">
+      La persona debe tener una cuenta registrada en INVENTRY.
+    </p>
+  `, sendInventoryInvite);
+}
+
+async function sendInventoryInvite() {
+  const inv = activeInventory();
+  const email = document
+    .getElementById("shareEmail")
+    .value.trim();
+
+  const role = document.getElementById("shareRole").value;
+
+  if (!email) {
+    return alert("Ingresá un correo electrónico.");
+  }
+
+  const saveButton = document.getElementById("modalSave");
+  saveButton.disabled = true;
+  saveButton.textContent = "Compartiendo...";
+
+  const { data, error } = await db.rpc(
+    "invite_inventory_member",
+    {
+      p_inventory_id: inv.id,
+      p_email: email,
+      p_role: role
+    }
+  );
+
+  saveButton.disabled = false;
+  saveButton.textContent = "Guardar";
+
+  if (error) {
+    return alert("No se pudo compartir: " + error.message);
+  }
+
+  closeModal();
+
+  alert(data || "¡Inventario compartido correctamente!");
+}
+
 function renderProducts() {
  const inv = activeInventory();
  const body = document.getElementById("productsTable");
